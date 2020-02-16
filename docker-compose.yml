@@ -1,0 +1,58 @@
+version: "3.7"
+services:
+  nats:
+    image: nats-streaming
+    ports:
+      - "4222:4222"
+      - "8222:8222"
+
+  movie-keeper:
+    image: mongo
+    ports:
+      - "27017:27017"
+
+  movie-keeper-api:
+    image: movie-keeper-api
+    environment:
+      - PORT=3000
+      - NODE_ENV=${ENVIRONMENT}
+      - LOG_LEVEL=${LEVEL}
+      - OMDb_API_KEY=${OMDb_API_KEY}
+      - OMDb_URL=${OMDb_URL}
+      - MONGO_URI=${MONGO_URI}
+      - NATS_URL=${QUEUE_URL}
+    ports:
+      - "3001:3000"
+    links:
+      - nats
+      - movie-keeper
+
+  movie-finder:
+    image: movie-finder
+    environment:
+      - INCOMING_CHANNEL=${VIEW_CHANNEL}
+      - OUTGOING_CHANNEL=${FOUND_CHANNEL}
+      - OMDb_API_KEY=${OMDb_API_KEY}
+      - OMDb_URL=${OMDb_URL}
+      - NATS_URL=${QUEUE_URL}
+    links:
+      - nats
+
+  movie-saver:
+    image: movie-saver
+    environment:
+      - INCOMING_CHANNEL=${FOUND_CHANNEL}
+      - MONGO_URI=${MONGO_URI}
+      - NATS_URL=${QUEUE_URL}
+    links:
+      - nats
+      - movie-keeper
+
+  my-movie-collection:
+    image: my-movie-collection
+    environment:
+      - MOVIE_API_URL=${MOVIE_API_URL}
+    ports:
+      - "80:80"
+    depends_on:
+      - movie-keeper-api
