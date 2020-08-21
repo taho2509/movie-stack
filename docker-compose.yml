@@ -12,13 +12,16 @@ services:
       - "27017:27017"
 
   movie-keeper-api:
-    image: movie-keeper-api
+    image: movie-keeper-api:latest
+    build:
+      context: ../movie-keeper-api/
+      dockerfile: Dockerfile
     environment:
       - PORT=3000
       - NODE_ENV=${ENVIRONMENT}
       - LOG_LEVEL=${LEVEL}
-      - OMDb_API_KEY=${OMDb_API_KEY}
-      - OMDb_URL=${OMDb_URL}
+      - OMDB_API_KEY=${OMDb_API_KEY}
+      - OMDB_URL=${OMDb_URL}
       - MONGO_URI=${MONGO_URI}
       - NATS_URL=${QUEUE_URL}
     ports:
@@ -28,7 +31,9 @@ services:
       - movie-keeper
 
   movie-finder:
-    image: movie-finder
+    image: movie-finder:latest
+    build:
+      context: ../movie-finder/
     environment:
       - INCOMING_CHANNEL=${VIEW_CHANNEL}
       - OUTGOING_CHANNEL=${FOUND_CHANNEL}
@@ -39,7 +44,9 @@ services:
       - nats
 
   movie-saver:
-    image: movie-saver
+    image: movie-saver:latest
+    build:
+      context: ../movie-saver/
     environment:
       - INCOMING_CHANNEL=${FOUND_CHANNEL}
       - MONGO_URI=${MONGO_URI}
@@ -49,7 +56,10 @@ services:
       - movie-keeper
 
   my-movie-collection:
-    image: my-movie-collection
+    image: my-movie-collection:latest
+    build:
+      context: ../my-movie-collection/
+      dockerfile: Dockerfile
     environment:
       - MOVIE_API_URL=${MOVIE_API_URL}
     ports:
